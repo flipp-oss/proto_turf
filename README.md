@@ -40,7 +40,7 @@ If you're using [buf](https://buf.build/) to manage your Protobuf definitions, y
 
 ## Notes about usage
 
-* For now, this library only supports top-level Protobuf messages (not nested).
+* For now, this library only supports top-level Protobuf messages (so the first message in the `.proto` file - no nesting and no subsequent messages).
 * When decoding, this library does *not* attempt to fully parse the Proto definition stored on the schema registry and generate dynamic classes. Instead, it simply parses out the package and message and assumes that the reader has the message available in the descriptor pool. Any compatibility issues should be detected through normal means, i.e. just by instantiating the message and seeing if any errors are raised.
 
 ## TODO
