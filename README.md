@@ -40,9 +40,5 @@ If you're using [buf](https://buf.build/) to manage your Protobuf definitions, y
 
 ## Notes about usage
 
-* For now, this library only supports a single message per `.proto` file that is registered with the Schema Registry. You can reference as many other files and messages as you like from that message, but keeping it to one message per file simplifies the workflow significantly.
 * When decoding, this library does *not* attempt to fully parse the Proto definition stored on the schema registry and generate dynamic classes. Instead, it simply parses out the package and message and assumes that the reader has the message available in the descriptor pool. Any compatibility issues should be detected through normal means, i.e. just by instantiating the message and seeing if any errors are raised.
 
-## TODO
-
-* Support multi-message proto files
