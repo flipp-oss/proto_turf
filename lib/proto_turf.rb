@@ -1,5 +1,4 @@
 require 'logger'
-require 'proto_turf/schema_store'
 require 'proto_turf/confluent_schema_registry'
 require 'proto_turf/cached_confluent_schema_registry'
 
