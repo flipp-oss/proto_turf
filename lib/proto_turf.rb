@@ -1,6 +1,10 @@
-require 'logger'
-require 'proto_turf/confluent_schema_registry'
-require 'proto_turf/cached_confluent_schema_registry'
+require "logger"
+require "google/protobuf"
+require "google/protobuf/well_known_types"
+require "google/protobuf/descriptor_pb"
+require "json"
+require "proto_turf/confluent_schema_registry"
+require "proto_turf/cached_confluent_schema_registry"
 
 class ProtoTurf
   # Provides a way to encode and decode messages without having to embed schemas
@@ -15,14 +19,13 @@ class ProtoTurf
   # https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format
   MAGIC_BYTE = [0].pack("C").freeze
 
-
   # Instantiate a new ProtoTurf instance with the given configuration.
   #
   # registry             - A schema registry object that responds to all methods in the
   #                        ProtoTurf::ConfluentSchemaRegistry interface.
   # registry_url         - The String URL of the schema registry that should be used.
   # schema_context       - Schema registry context name (optional)
-  # schemas_path         - The String file system path where local schemas are stored.
+  # schema_paths         - The String file system path where local schemas are stored.
   # registry_path_prefix - The String URL path prefix used to namespace schema registry requests (optional).
   # logger               - The Logger that should be used to log information (optional).
   # proxy                - Forward the request via  proxy (optional).
@@ -40,7 +43,7 @@ class ProtoTurf
     registry: nil,
     registry_url: nil,
     schema_context: nil,
-    schemas_path: nil,
+    schema_paths: nil,
     registry_path_prefix: nil,
     logger: nil,
     proxy: nil,
@@ -57,7 +60,7 @@ class ProtoTurf
     retry_limit: nil
   )
     @logger = logger || Logger.new($stderr)
-    @path = schemas_path
+    @paths = Array(schema_paths)
     @registry = registry || ProtoTurf::CachedConfluentSchemaRegistry.new(
       ProtoTurf::ConfluentSchemaRegistry.new(
         registry_url,
@@ -101,7 +104,7 @@ class ProtoTurf
     stream.write([id].pack("N"))
 
     _, indexes = find_index(message.class.descriptor.to_proto,
-                            file_descriptor.to_proto.message_type)
+      file_descriptor.to_proto.message_type)
 
     if indexes == [0]
       write_int(stream, 0)
@@ -138,7 +141,7 @@ class ProtoTurf
     end
 
     # The schema id is a 4-byte big-endian integer.
-    schema_id = stream.read(4).unpack("N").first
+    schema_id = stream.read(4).unpack1("N")
 
     # For now, we're only going to support a single message per schema. See
     # https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format
@@ -161,7 +164,7 @@ class ProtoTurf
 
   private
 
-  def find_index(descriptor, messages, indexes=[])
+  def find_index(descriptor, messages, indexes = [])
     messages.each_with_index do |sub_descriptor, i|
       if sub_descriptor == descriptor
         indexes.push(i)
@@ -221,7 +224,7 @@ class ProtoTurf
       raise "Could not find schema for #{full_name}. Make sure the corresponding .proto file has been compiled and loaded."
     end
     path = find_descriptor(indexes, descriptor.file_descriptor.to_proto.message_type)
-    correct_message = Google::Protobuf::DescriptorPool.generated_pool.lookup("#{package}.#{path.join('.')}")
+    correct_message = Google::Protobuf::DescriptorPool.generated_pool.lookup("#{package}.#{path.join(".")}")
     correct_message.msgclass.decode(encoded)
   end
 
@@ -230,7 +233,7 @@ class ProtoTurf
     return if @registry.registered?(file_descriptor.name, subject)
 
     # register dependencies first
-    dependencies = file_descriptor.to_proto.dependency.to_a.reject { |d| d.start_with?('google/protobuf/') }
+    dependencies = file_descriptor.to_proto.dependency.to_a.reject { |d| d.start_with?("google/protobuf/") }
     versions = dependencies.map do |dependency|
       dependency_descriptor = @all_schemas[dependency]
       result = register_schema(dependency_descriptor, subject: dependency_descriptor.name)
@@ -238,20 +241,22 @@ class ProtoTurf
     end
 
     @registry.register(subject,
-                       schema_text(file_descriptor),
-                       references: dependencies.map.with_index do |dependency, i|
-                         {
-                           name: dependency,
-                           subject: dependency,
-                           version: versions[i]
-                         }
-                       end
-    )
+      schema_text(file_descriptor),
+      references: dependencies.map.with_index do |dependency, i|
+        {
+          name: dependency,
+          subject: dependency,
+          version: versions[i]
+        }
+      end)
   end
 
   def schema_text(file_descriptor)
-    filename = "#{@path}/#{file_descriptor.name}"
-    File.exist?(filename) ? File.read(filename) : ""
+    @paths.each do |path|
+      filename = "#{path}/#{file_descriptor.name}"
+      return File.read(filename) if File.exist?(filename)
+    end
+    ""
   end
 
   def load_schemas!
@@ -261,10 +266,9 @@ class ProtoTurf
     all_messages.each do |m|
       file_desc = m.descriptor.file_descriptor
       file_path = file_desc.name
-      next if file_path.start_with?('google/protobuf/') # skip built-in protos
+      next if file_path.start_with?("google/protobuf/") # skip built-in protos
 
       @all_schemas[file_path] = file_desc
     end
   end
-
 end

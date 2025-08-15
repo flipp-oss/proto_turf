@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package referenced.v1;
+import "simple/simple.proto";
+
+message MessageA {
+  message MessageAA {
+    string name = 1;
+    simple.v1.SimpleMessage simple = 2;
+  }
+  message MessageAB {
+    string name = 1;
+  }
+}
+
+message MessageB {
+  message MessageBA {
+    string name = 1;
+    simple.v1.SimpleMessage simple = 2;
+  }
+  message MessageBB {
+    string name = 1;
+  }
+}

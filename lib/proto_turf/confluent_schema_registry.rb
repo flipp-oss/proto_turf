@@ -1,8 +1,7 @@
-require 'excon'
+require "excon"
 
 class ProtoTurf
   class ConfluentSchemaRegistry
-
     CONTENT_TYPE = "application/vnd.schemaregistry.v1+json".freeze
 
     def initialize(
@@ -24,7 +23,7 @@ class ProtoTurf
       retry_limit: nil
     )
       @path_prefix = path_prefix
-      @schema_context_prefix = schema_context.nil? ? '' : ":.#{schema_context}:"
+      @schema_context_prefix = schema_context.nil? ? "" : ":.#{schema_context}:"
       @schema_context_options = schema_context.nil? ? {} : {query: {subject: @schema_context_prefix}}
       @logger = logger
       headers = Excon.defaults[:headers].merge(
@@ -57,7 +56,7 @@ class ProtoTurf
     # @return [String] the schema string stored in the registry for the given id
     def fetch(id)
       @logger.info "Fetching schema with id #{id}"
-      data = get("/schemas/ids/#{id}", idempotent: true, **@schema_context_options, )
+      data = get("/schemas/ids/#{id}", idempotent: true, **@schema_context_options)
       data.fetch("schema")
     end
 
@@ -73,9 +72,9 @@ class ProtoTurf
     # @return [Integer] the ID of the registered schema
     def register(subject, schema, references: [])
       data = post("/subjects/#{@schema_context_prefix}#{CGI.escapeURIComponent(subject)}/versions",
-                  body: { schemaType: 'PROTOBUF',
-                          references: references,
-                          schema: schema.to_s }.to_json)
+        body: {schemaType: "PROTOBUF",
+               references: references,
+               schema: schema.to_s}.to_json)
 
       id = data.fetch("id")
 
@@ -105,7 +104,7 @@ class ProtoTurf
     end
 
     def request(path, **options)
-      options = { expects: 200 }.merge!(options)
+      options = {expects: 200}.merge!(options)
       path = File.join(@path_prefix, path) unless @path_prefix.nil?
       response = @connection.request(path: path, **options)
       JSON.parse(response.body)
@@ -113,6 +112,5 @@ class ProtoTurf
       @logger.error("Error while requesting #{path}: #{e.response.body}")
       raise
     end
-
   end
 end

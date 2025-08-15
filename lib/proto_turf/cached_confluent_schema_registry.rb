@@ -1,5 +1,4 @@
 class ProtoTurf::CachedConfluentSchemaRegistry
-
   # @param upstream [ProtoTurf::ConfluentSchemaRegistry]
   def initialize(upstream)
     @upstream = upstream
@@ -9,7 +8,7 @@ class ProtoTurf::CachedConfluentSchemaRegistry
   end
 
   # Delegate the following methods to the upstream
-  %i(subject_versions schema_subject_versions).each do |name|
+  %i[subject_versions schema_subject_versions].each do |name|
     define_method(name) do |*args|
       instance_variable_get(:@upstream).send(name, *args)
     end
@@ -29,14 +28,14 @@ class ProtoTurf::CachedConfluentSchemaRegistry
     return @versions_by_subject_and_id[key] if @versions_by_subject_and_id[key]
 
     results = @upstream.schema_subject_versions(id)
-    @versions_by_subject_and_id[key] = results&.find { |r| r['subject'] == subject }&.dig('version')
+    @versions_by_subject_and_id[key] = results&.find { |r| r["subject"] == subject }&.dig("version")
   end
 
   # @param subject [String] the subject to check
   # @param schema [String] the schema text to check
   # @return [Boolean] true if we know the schema has been registered for that subject.
   def registered?(subject, schema)
-    @ids_by_schema[[subject, schema]].present?
+    @ids_by_schema[[subject, schema]] && !@ids_by_schema[[subject, schema]].empty?
   end
 
   # @param subject [String] the subject to register the schema under
@@ -47,5 +46,4 @@ class ProtoTurf::CachedConfluentSchemaRegistry
 
     @ids_by_schema[key] ||= @upstream.register(subject, schema, references: references)
   end
-
 end
