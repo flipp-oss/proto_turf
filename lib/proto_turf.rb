@@ -90,7 +90,8 @@ class ProtoTurf
   def encode(message, subject: nil)
     load_schemas! if @all_schemas.empty?
 
-    id = register_schema(message.class.descriptor.file_descriptor, subject: subject)
+    file_descriptor = message.class.descriptor.file_descriptor
+    id = register_schema(file_descriptor, subject: subject)
 
     stream = StringIO.new
     # Always start with the magic byte.
@@ -99,9 +100,15 @@ class ProtoTurf
     # The schema id is encoded as a 4-byte big-endian integer.
     stream.write([id].pack("N"))
 
-    # For now, we're only going to support a single message per schema. See
-    # https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format
-    write_int(stream, 0)
+    _, indexes = find_index(message.class.descriptor.to_proto,
+                            file_descriptor.to_proto.message_type)
+
+    if indexes == [0]
+      write_int(stream, 0)
+    else
+      write_int(stream, indexes.length)
+      indexes.each { |i| write_int(stream, i) }
+    end
 
     # Now we write the actual message.
     stream.write(message.to_proto)
@@ -135,16 +142,48 @@ class ProtoTurf
 
     # For now, we're only going to support a single message per schema. See
     # https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format
-    read_int(stream)
+    index_length = read_int(stream)
+    indexes = []
+    if index_length.zero?
+      indexes.push(0)
+    else
+      index_length.times do
+        indexes.push(read_int(stream))
+      end
+    end
 
     schema = @registry.fetch(schema_id)
     encoded = stream.read
-    decode_protobuf(schema, encoded)
+    decode_protobuf(schema, encoded, indexes)
   rescue Excon::Error::NotFound
     raise SchemaNotFoundError.new("Schema with id: #{schema_id} is not found on registry")
   end
 
   private
+
+  def find_index(descriptor, messages, indexes=[])
+    messages.each_with_index do |sub_descriptor, i|
+      if sub_descriptor == descriptor
+        indexes.push(i)
+        return [true, indexes]
+      else
+        found, found_indexes = find_index(descriptor, sub_descriptor.nested_type, indexes + [i])
+        return [true, found_indexes] if found
+      end
+    end
+    []
+  end
+
+  def find_descriptor(indexes, messages)
+    first_index = indexes.shift
+    message = messages[first_index]
+    path = [message.name]
+    while indexes.length.positive?
+      message = message.nested_type[indexes.shift]
+      path.push(message.name)
+    end
+    path
+  end
 
   # Write an int with zig-zag encoding. Copied from Avro.
   def write_int(stream, n)
@@ -169,7 +208,7 @@ class ProtoTurf
     (n >> 1) ^ -(n & 1)
   end
 
-  def decode_protobuf(schema, encoded)
+  def decode_protobuf(schema, encoded, indexes)
     # get the package
     package = schema.match(/package (\S+);/)[1]
     # get the first message in the protobuf text
@@ -181,7 +220,9 @@ class ProtoTurf
     unless descriptor
       raise "Could not find schema for #{full_name}. Make sure the corresponding .proto file has been compiled and loaded."
     end
-    descriptor.msgclass.decode(encoded)
+    path = find_descriptor(indexes, descriptor.file_descriptor.to_proto.message_type)
+    correct_message = Google::Protobuf::DescriptorPool.generated_pool.lookup("#{package}.#{path.join('.')}")
+    correct_message.msgclass.decode(encoded)
   end
 
   def register_schema(file_descriptor, subject: nil)
