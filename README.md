@@ -41,4 +41,3 @@ If you're using [buf](https://buf.build/) to manage your Protobuf definitions, y
 ## Notes about usage
 
 * When decoding, this library does *not* attempt to fully parse the Proto definition stored on the schema registry and generate dynamic classes. Instead, it simply parses out the package and message and assumes that the reader has the message available in the descriptor pool. Any compatibility issues should be detected through normal means, i.e. just by instantiating the message and seeing if any errors are raised.
-
