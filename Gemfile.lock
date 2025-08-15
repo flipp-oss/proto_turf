@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    proto_turf (0.0.2)
+    proto_turf (0.0.3)
       excon
       google-protobuf
 
@@ -19,6 +19,9 @@ GEM
     excon (1.2.9)
       logger
     google-protobuf (4.30.2-arm64-darwin)
+      bigdecimal
+      rake (>= 13)
+    google-protobuf (4.30.2-x86_64-linux)
       bigdecimal
       rake (>= 13)
     hashdiff (1.2.0)
@@ -93,6 +96,7 @@ GEM
 
 PLATFORMS
   arm64-darwin
+  x86_64-linux
 
 DEPENDENCIES
   bundler (~> 2.0)
