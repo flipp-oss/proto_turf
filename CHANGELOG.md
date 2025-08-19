@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## UNRELEASED
 
-# 0.0.3 - 2025-8-15
+# 0.0.4 - 2025-08-19
+
+* Changed emitting of protobuf schemas from file-based to generated from descriptors.
+
+# 0.0.3 - 2025-08-15
 
 * Initial release.
