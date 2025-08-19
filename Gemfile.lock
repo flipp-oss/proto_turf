@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    proto_turf (0.0.3)
+    proto_turf (0.0.4)
       excon
       google-protobuf
 
