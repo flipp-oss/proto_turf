@@ -5,6 +5,7 @@ require "google/protobuf/descriptor_pb"
 require "json"
 require "proto_turf/confluent_schema_registry"
 require "proto_turf/cached_confluent_schema_registry"
+require "proto_turf/proto_text"
 
 class ProtoTurf
   # Provides a way to encode and decode messages without having to embed schemas
@@ -25,7 +26,6 @@ class ProtoTurf
   #                        ProtoTurf::ConfluentSchemaRegistry interface.
   # registry_url         - The String URL of the schema registry that should be used.
   # schema_context       - Schema registry context name (optional)
-  # schema_paths         - The String file system path where local schemas are stored.
   # registry_path_prefix - The String URL path prefix used to namespace schema registry requests (optional).
   # logger               - The Logger that should be used to log information (optional).
   # proxy                - Forward the request via  proxy (optional).
@@ -43,7 +43,6 @@ class ProtoTurf
     registry: nil,
     registry_url: nil,
     schema_context: nil,
-    schema_paths: nil,
     registry_path_prefix: nil,
     logger: nil,
     proxy: nil,
@@ -60,7 +59,6 @@ class ProtoTurf
     retry_limit: nil
   )
     @logger = logger || Logger.new($stderr)
-    @paths = Array(schema_paths)
     @registry = registry || ProtoTurf::CachedConfluentSchemaRegistry.new(
       ProtoTurf::ConfluentSchemaRegistry.new(
         registry_url,
@@ -252,19 +250,12 @@ class ProtoTurf
   end
 
   def schema_text(file_descriptor)
-    @paths.each do |path|
-      filename = "#{path}/#{file_descriptor.name}"
-      return File.read(filename) if File.exist?(filename)
-    end
-    ""
+    ProtoTurf::ProtoText.output(file_descriptor.to_proto)
   end
 
   def load_schemas!
-    all_messages = ObjectSpace.each_object(Class).select do |o|
-      o < Google::Protobuf.const_get(:AbstractMessage)
-    end.to_a
-    all_messages.each do |m|
-      file_desc = m.descriptor.file_descriptor
+    all_files = ObjectSpace.each_object(Google::Protobuf::FileDescriptor).to_a
+    all_files.each do |file_desc|
       file_path = file_desc.name
       next if file_path.start_with?("google/protobuf/") # skip built-in protos
 

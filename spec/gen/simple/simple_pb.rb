@@ -5,7 +5,7 @@
 
 require "google/protobuf"
 
-descriptor_data = "\n\x13simple/simple.proto\x12\tsimple.v1\"\x1d\n\rSimpleMessage\x12\x0c\n\x04name\x18\x01 \x01(\tb\x06proto3"
+descriptor_data = "\n\x13simple/simple.proto\x12\tsimple.v1\"\x1d\n\rSimpleMessage\x12\x0c\n\x04name\x18\x01 \x01(\t*,\n\nSimpleEnum\x12\x0e\n\nSIMPLE_FOO\x10\x00\x12\x0e\n\nSIMPLE_BAR\x10\x01\x62\x06proto3"
 
 pool = Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)
@@ -13,5 +13,6 @@ pool.add_serialized_file(descriptor_data)
 module Simple
   module V1
     SimpleMessage = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("simple.v1.SimpleMessage").msgclass
+    SimpleEnum = ::Google::Protobuf::DescriptorPool.generated_pool.lookup("simple.v1.SimpleEnum").enummodule
   end
 end

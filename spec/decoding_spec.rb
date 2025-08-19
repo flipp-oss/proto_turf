@@ -1,8 +1,7 @@
 RSpec.describe "encoding" do
   let(:proto_turf) do
     ProtoTurf.new(
-      registry_url: "http://localhost:8081",
-      schema_paths: ["spec/schemas"]
+      registry_url: "http://localhost:8081"
     )
   end
 

@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package simple.v1;
 
+enum SimpleEnum {
+  SIMPLE_FOO = 0;
+  SIMPLE_BAR = 1;
+}
+
 message SimpleMessage {
   string name = 1;
 }
