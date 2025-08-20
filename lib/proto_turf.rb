@@ -8,6 +8,8 @@ require "proto_turf/cached_confluent_schema_registry"
 require "proto_turf/proto_text"
 
 class ProtoTurf
+  class SchemaNotFoundError < StandardError; end
+
   # Provides a way to encode and decode messages without having to embed schemas
   # in the encoded data. Confluent's Schema Registry[1] is used to register
   # a schema when encoding a message -- the registry will issue a schema id that
@@ -115,12 +117,6 @@ class ProtoTurf
     stream.write(message.to_proto)
 
     stream.string
-  rescue Excon::Error::NotFound
-    if schema_id
-      raise SchemaNotFoundError.new("Schema with id: #{schema_id} is not found on registry")
-    else
-      raise SchemaNotFoundError.new("Schema with subject: `#{subject}` version: `#{version}` is not found on registry")
-    end
   end
 
   # Decodes data into the original message.

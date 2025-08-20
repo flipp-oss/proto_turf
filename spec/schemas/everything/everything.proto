@@ -76,7 +76,7 @@ enum NestedEnum {
   repeated string repeated_string_piece = 54 [ctype = STRING_PIECE];
   repeated string repeated_cord = 55 [ctype = CORD];
   repeated NestedMessage repeated_lazy_message = 57 [lazy = true];
-                oneof oneof_field {
+  oneof oneof_field {
     uint32 oneof_uint32 = 111;
     NestedMessage oneof_nested_message = 112;
     string oneof_string = 113;

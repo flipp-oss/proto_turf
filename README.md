@@ -36,10 +36,6 @@ encoded = proto_turf.encode(message, subject: 'my-subject')
 decoded_proto_message = proto_turf.decode(encoded_string)
 ```
 
-If you're using [buf](https://buf.build/) to manage your Protobuf definitions, you should run `buf export` before using `proto_turf` to ensure that all the dependencies are available as `.proto` files in your project. The actual proto text is needed when registering the schema with the Schema Registry.
-
-Because `buf export` overwrites/deletes existing files, you should run it into a different directory and provide both as `schema_paths` to the `ProtoTurf` constructor.
-
 ## Notes about usage
 
 * When decoding, this library does *not* attempt to fully parse the Proto definition stored on the schema registry and generate dynamic classes. Instead, it simply parses out the package and message and assumes that the reader has the message available in the descriptor pool. Any compatibility issues should be detected through normal means, i.e. just by instantiating the message and seeing if any errors are raised.

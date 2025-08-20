@@ -141,6 +141,8 @@ class ProtoTurf
         end
         write_oneofs(info, message_type)
         message_type.nested_type.each do |subtype|
+          next if subtype.options&.map_entry
+
           info.writenl
           write_message(info, subtype)
         end
@@ -189,8 +191,8 @@ class ProtoTurf
       end
 
       def write_field(info, field, oneof: false)
-        info.write_indent("")
         return if !oneof && field.has_oneof_index?
+        info.write_indent("")
 
         klass = nil
         if field.type_name && field.type_name != ""
@@ -226,8 +228,10 @@ class ProtoTurf
 
       def write_oneofs(info, message)
         message.oneof_decl.each_with_index do |oneof, i|
+          # synthetic oneof for proto3 optional fields
           next if oneof.name.start_with?("_") &&
             message.field.any? { |f| f.proto3_optional && f.name == oneof.name[1..] }
+
           info.write_line("oneof #{oneof.name} {")
           info.indent
           message.field.select { |f| f.has_oneof_index? && f.oneof_index == i }.each do |field|
