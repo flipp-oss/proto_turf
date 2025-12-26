@@ -1,0 +1,328 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "optional_int32": {
+      "type": "integer"
+    },
+    "optional_int64": {
+      "type": "string"
+    },
+    "optional_uint32": {
+      "type": "integer"
+    },
+    "optional_uint64": {
+      "type": "string"
+    },
+    "optional_sint32": {
+      "type": "integer"
+    },
+    "optional_sint64": {
+      "type": "string"
+    },
+    "optional_fixed32": {
+      "type": "integer"
+    },
+    "optional_fixed64": {
+      "type": "string"
+    },
+    "optional_sfixed32": {
+      "type": "integer"
+    },
+    "optional_sfixed64": {
+      "type": "string"
+    },
+    "optional_float": {
+      "type": "number"
+    },
+    "optional_double": {
+      "type": "number"
+    },
+    "optional_bool": {
+      "type": "boolean"
+    },
+    "optional_string": {
+      "type": "string"
+    },
+    "optional_bytes": {
+      "type": "string"
+    },
+    "optional_nested_message": {
+      "type": "object"
+    },
+    "optional_foreign_message": {
+      "type": "object"
+    },
+    "optional_import_message": {
+      "type": "object"
+    },
+    "optional_nested_enum": {
+      "enum": [
+        "FOO",
+        "BAR",
+        "BAZ"
+      ]
+    },
+    "optional_foreign_enum": {
+      "enum": [
+        "FOREIGN_FOO",
+        "FOREIGN_BAR"
+      ]
+    },
+    "optional_import_enum": {
+      "enum": [
+        "SIMPLE_FOO",
+        "SIMPLE_BAR"
+      ]
+    },
+    "optional_string_piece": {
+      "type": "string"
+    },
+    "optional_cord": {
+      "type": "string"
+    },
+    "optional_bytes_cord": {
+      "type": "string"
+    },
+    "optional_lazy_message": {
+      "type": "object"
+    },
+    "optional_unverified_lazy_message": {
+      "type": "object"
+    },
+    "repeated_int32": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "repeated_int64": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_uint32": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "repeated_uint64": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_sint32": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "repeated_sint64": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_fixed32": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "repeated_fixed64": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_sfixed32": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "repeated_sfixed64": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_float": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "repeated_double": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "repeated_bool": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    },
+    "repeated_string": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_bytes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_nested_message": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "repeated_foreign_message": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "repeated_import_message": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "repeated_nested_enum": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "FOO",
+          "BAR",
+          "BAZ"
+        ]
+      }
+    },
+    "repeated_foreign_enum": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "FOREIGN_FOO",
+          "FOREIGN_BAR"
+        ]
+      }
+    },
+    "repeated_import_enum": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "SIMPLE_FOO",
+          "SIMPLE_BAR"
+        ]
+      }
+    },
+    "repeated_string_piece": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_cord": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeated_lazy_message": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "oneof_uint32": {
+      "type": "integer"
+    },
+    "oneof_nested_message": {
+      "type": "object"
+    },
+    "oneof_string": {
+      "type": "string"
+    },
+    "oneof_bytes": {
+      "type": "string"
+    },
+    "oneof_cord": {
+      "type": "string"
+    },
+    "oneof_string_piece": {
+      "type": "string"
+    },
+    "oneof_lazy_nested_message": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "optional_int32",
+    "optional_int64",
+    "optional_uint32",
+    "optional_uint64",
+    "optional_sint32",
+    "optional_sint64",
+    "optional_fixed32",
+    "optional_fixed64",
+    "optional_sfixed32",
+    "optional_sfixed64",
+    "optional_float",
+    "optional_double",
+    "optional_bool",
+    "optional_string",
+    "optional_bytes",
+    "optional_nested_message",
+    "optional_foreign_message",
+    "optional_import_message",
+    "optional_nested_enum",
+    "optional_foreign_enum",
+    "optional_import_enum",
+    "optional_string_piece",
+    "optional_cord",
+    "optional_bytes_cord",
+    "optional_lazy_message",
+    "optional_unverified_lazy_message",
+    "repeated_int32",
+    "repeated_int64",
+    "repeated_uint32",
+    "repeated_uint64",
+    "repeated_sint32",
+    "repeated_sint64",
+    "repeated_fixed32",
+    "repeated_fixed64",
+    "repeated_sfixed32",
+    "repeated_sfixed64",
+    "repeated_float",
+    "repeated_double",
+    "repeated_bool",
+    "repeated_string",
+    "repeated_bytes",
+    "repeated_nested_message",
+    "repeated_foreign_message",
+    "repeated_import_message",
+    "repeated_nested_enum",
+    "repeated_foreign_enum",
+    "repeated_import_enum",
+    "repeated_string_piece",
+    "repeated_cord",
+    "repeated_lazy_message",
+    "oneof_uint32",
+    "oneof_nested_message",
+    "oneof_string",
+    "oneof_bytes",
+    "oneof_cord",
+    "oneof_string_piece",
+    "oneof_lazy_nested_message"
+  ]
+}

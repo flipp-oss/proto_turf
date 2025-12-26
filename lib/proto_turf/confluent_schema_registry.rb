@@ -1,8 +1,10 @@
-require "excon"
+# frozen_string_literal: true
+
+require 'excon'
 
 class ProtoTurf
   class ConfluentSchemaRegistry
-    CONTENT_TYPE = "application/vnd.schemaregistry.v1+json".freeze
+    CONTENT_TYPE = 'application/vnd.schemaregistry.v1+json'
 
     def initialize(
       url,
@@ -23,11 +25,11 @@ class ProtoTurf
       retry_limit: nil
     )
       @path_prefix = path_prefix
-      @schema_context_prefix = schema_context.nil? ? "" : ":.#{schema_context}:"
-      @schema_context_options = schema_context.nil? ? {} : {query: {subject: @schema_context_prefix}}
+      @schema_context_prefix = schema_context.nil? ? '' : ":.#{schema_context}:"
+      @schema_context_options = schema_context.nil? ? {} : { query: { subject: @schema_context_prefix } }
       @logger = logger
       headers = Excon.defaults[:headers].merge(
-        "Content-Type" => CONTENT_TYPE
+        'Content-Type' => CONTENT_TYPE
       )
       params = {
         headers: headers,
@@ -57,7 +59,7 @@ class ProtoTurf
     def fetch(id)
       @logger.info "Fetching schema with id #{id}"
       data = get("/schemas/ids/#{id}", idempotent: true, **@schema_context_options)
-      data.fetch("schema")
+      data.fetch('schema')
     end
 
     # @param schema_id [Integer] the schema ID to fetch versions for
@@ -70,13 +72,13 @@ class ProtoTurf
     # @param schema [String] the schema text to check
     # @param references [Array<Hash>] optional references to other schemas
     # @return [Integer] the ID of the registered schema
-    def register(subject, schema, references: [])
+    def register(subject, schema, references: [], schema_type: 'PROTOBUF')
       data = post("/subjects/#{@schema_context_prefix}#{CGI.escapeURIComponent(subject)}/versions",
-        body: {schemaType: "PROTOBUF",
-               references: references,
-               schema: schema.to_s}.to_json)
+                  body: { schemaType: schema_type,
+                          references: references,
+                          schema: schema.to_s }.to_json)
 
-      id = data.fetch("id")
+      id = data.fetch('id')
 
       @logger.info "Registered schema for subject `#{@schema_context_prefix}#{subject}`; id = #{id}"
 
@@ -104,7 +106,7 @@ class ProtoTurf
     end
 
     def request(path, **options)
-      options = {expects: 200}.merge!(options)
+      options = { expects: 200 }.merge!(options)
       path = File.join(@path_prefix, path) unless @path_prefix.nil?
       response = @connection.request(path: path, **options)
       JSON.parse(response.body)

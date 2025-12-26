@@ -1,11 +1,11 @@
-require "logger"
-require "google/protobuf"
-require "google/protobuf/well_known_types"
-require "google/protobuf/descriptor_pb"
-require "json"
-require "proto_turf/confluent_schema_registry"
-require "proto_turf/cached_confluent_schema_registry"
-require "proto_turf/proto_text"
+# frozen_string_literal: true
+
+require 'logger'
+require 'json'
+require 'proto_turf/confluent_schema_registry'
+require 'proto_turf/cached_confluent_schema_registry'
+require 'proto_turf/schema/proto'
+require 'proto_turf/schema/json'
 
 class ProtoTurf
   class SchemaNotFoundError < StandardError; end
@@ -20,7 +20,7 @@ class ProtoTurf
   # 1: https://github.com/confluentinc/schema-registry
   # https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/serdes-protobuf.html
   # https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format
-  MAGIC_BYTE = [0].pack("C").freeze
+  MAGIC_BYTE = [0].pack('C').freeze
 
   # Instantiate a new ProtoTurf instance with the given configuration.
   #
@@ -41,6 +41,7 @@ class ProtoTurf
   # client_key_data      - In-memory client private key to go with client_cert_data (optional).
   # connect_timeout      - Timeout to use in the connection with the schema registry (optional).
   # resolv_resolver      - Custom domain name resolver (optional).
+  # schema_type          - Protobuf or JSON.
   def initialize(
     registry: nil,
     registry_url: nil,
@@ -58,7 +59,8 @@ class ProtoTurf
     client_key_data: nil,
     connect_timeout: nil,
     resolv_resolver: nil,
-    retry_limit: nil
+    retry_limit: nil,
+    schema_type: 'PROTOBUF'
   )
     @logger = logger || Logger.new($stderr)
     @registry = registry || ProtoTurf::CachedConfluentSchemaRegistry.new(
@@ -80,182 +82,69 @@ class ProtoTurf
         resolv_resolver: resolv_resolver
       )
     )
-    @all_schemas = {}
+    @schema = schema_type.to_s == 'JSON' ? ProtoTurf::Schema::Json : ProtoTurf::Schema::Proto
   end
 
   # Encodes a message using the specified schema.
-  #
-  # message           - The message that should be encoded. Must be compatible with
-  #                     the schema.
-  # subject           - The subject name the schema should be registered under in
-  #                     the schema registry (optional).
-  # Returns the encoded data as a String.
-  def encode(message, subject: nil)
-    load_schemas! if @all_schemas.empty?
-
-    file_descriptor = message.class.descriptor.file_descriptor
-    id = register_schema(file_descriptor, subject: subject)
+  # @param message [Object] The message that should be encoded. Must be compatible with the schema.
+  # @param subject [String] The subject name the schema should be registered under in the schema registry (optional).
+  # @return [String] the encoded data.
+  def encode(message, subject: nil, schema_text: nil)
+    id = register_schema(message, subject, schema_text: schema_text)
 
     stream = StringIO.new
     # Always start with the magic byte.
     stream.write(MAGIC_BYTE)
 
     # The schema id is encoded as a 4-byte big-endian integer.
-    stream.write([id].pack("N"))
+    stream.write([id].pack('N'))
 
-    _, indexes = find_index(message.class.descriptor.to_proto,
-      file_descriptor.to_proto.message_type)
-
-    if indexes == [0]
-      write_int(stream, 0)
-    else
-      write_int(stream, indexes.length)
-      indexes.each { |i| write_int(stream, i) }
-    end
-
-    # Now we write the actual message.
-    stream.write(message.to_proto)
-
+    @schema.encode(message, stream)
     stream.string
   end
 
   # Decodes data into the original message.
   #
-  # data        - A String containing encoded data.
-  #
-  # Returns a Protobuf AbstractMessage object instantiated with the decoded data.
+  # @param data [String] a string containing encoded data.
+  # @return [Object] the decoded data.
   def decode(data)
     stream = StringIO.new(data)
 
     # The first byte is MAGIC!!!
     magic_byte = stream.read(1)
 
-    if magic_byte != MAGIC_BYTE
-      raise "Expected data to begin with a magic byte, got `#{magic_byte.inspect}`"
-    end
+    raise "Expected data to begin with a magic byte, got `#{magic_byte.inspect}`" if magic_byte != MAGIC_BYTE
 
     # The schema id is a 4-byte big-endian integer.
-    schema_id = stream.read(4).unpack1("N")
-
-    # For now, we're only going to support a single message per schema. See
-    # https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format
-    index_length = read_int(stream)
-    indexes = []
-    if index_length.zero?
-      indexes.push(0)
-    else
-      index_length.times do
-        indexes.push(read_int(stream))
-      end
-    end
-
+    schema_id = stream.read(4).unpack1('N')
     schema = @registry.fetch(schema_id)
-    encoded = stream.read
-    decode_protobuf(schema, encoded, indexes)
+    @schema.decode(stream, schema)
   rescue Excon::Error::NotFound
-    raise SchemaNotFoundError.new("Schema with id: #{schema_id} is not found on registry")
+    raise SchemaNotFoundError, "Schema with id: #{schema_id} is not found on registry"
   end
 
   private
 
-  def find_index(descriptor, messages, indexes = [])
-    messages.each_with_index do |sub_descriptor, i|
-      if sub_descriptor == descriptor
-        indexes.push(i)
-        return [true, indexes]
-      else
-        found, found_indexes = find_index(descriptor, sub_descriptor.nested_type, indexes + [i])
-        return [true, found_indexes] if found
-      end
-    end
-    []
-  end
-
-  def find_descriptor(indexes, messages)
-    first_index = indexes.shift
-    message = messages[first_index]
-    path = [message.name]
-    while indexes.length.positive?
-      message = message.nested_type[indexes.shift]
-      path.push(message.name)
-    end
-    path
-  end
-
-  # Write an int with zig-zag encoding. Copied from Avro.
-  def write_int(stream, n)
-    n = (n << 1) ^ (n >> 63)
-    while (n & ~0x7F) != 0
-      stream.write(((n & 0x7f) | 0x80).chr)
-      n >>= 7
-    end
-    stream.write(n.chr)
-  end
-
-  # Read an int with zig-zag encoding. Copied from Avro.
-  def read_int(stream)
-    b = stream.readbyte
-    n = b & 0x7F
-    shift = 7
-    while (b & 0x80) != 0
-      b = stream.readbyte
-      n |= (b & 0x7F) << shift
-      shift += 7
-    end
-    (n >> 1) ^ -(n & 1)
-  end
-
-  def decode_protobuf(schema, encoded, indexes)
-    # get the package
-    package = schema.match(/package (\S+);/)[1]
-    # get the first message in the protobuf text
-    # TODO - get the correct message based on schema index
-    message_name = schema.match(/message (\w+) {/)[1]
-    # look up the descriptor
-    full_name = "#{package}.#{message_name}"
-    descriptor = Google::Protobuf::DescriptorPool.generated_pool.lookup(full_name)
-    unless descriptor
-      raise "Could not find schema for #{full_name}. Make sure the corresponding .proto file has been compiled and loaded."
-    end
-    path = find_descriptor(indexes, descriptor.file_descriptor.to_proto.message_type)
-    correct_message = Google::Protobuf::DescriptorPool.generated_pool.lookup("#{package}.#{path.join(".")}")
-    correct_message.msgclass.decode(encoded)
-  end
-
-  def register_schema(file_descriptor, subject: nil)
-    subject ||= file_descriptor.name
-    return if @registry.registered?(file_descriptor.name, subject)
+  def register_schema(message, subject, schema_text: nil)
+    schema_text ||= @schema.schema_text(message)
+    return if @registry.registered?(schema_text, subject)
 
     # register dependencies first
-    dependencies = file_descriptor.to_proto.dependency.to_a.reject { |d| d.start_with?("google/protobuf/") }
-    versions = dependencies.map do |dependency|
-      dependency_descriptor = @all_schemas[dependency]
-      result = register_schema(dependency_descriptor, subject: dependency_descriptor.name)
-      @registry.fetch_version(result, dependency_descriptor.name)
+    dependencies = @schema.dependencies(message)
+    versions = dependencies.map do |name, dependency|
+      result = register_schema(dependency, name)
+      @registry.fetch_version(result, name)
     end
 
     @registry.register(subject,
-      schema_text(file_descriptor),
-      references: dependencies.map.with_index do |dependency, i|
-        {
-          name: dependency,
-          subject: dependency,
-          version: versions[i]
-        }
-      end)
-  end
-
-  def schema_text(file_descriptor)
-    ProtoTurf::ProtoText.output(file_descriptor.to_proto)
-  end
-
-  def load_schemas!
-    all_files = ObjectSpace.each_object(Google::Protobuf::FileDescriptor).to_a
-    all_files.each do |file_desc|
-      file_path = file_desc.name
-      next if file_path.start_with?("google/protobuf/") # skip built-in protos
-
-      @all_schemas[file_path] = file_desc
-    end
+                       schema_text,
+                       references: dependencies.keys.map.with_index do |dependency, i|
+                         {
+                           name: dependency,
+                           subject: dependency,
+                           version: versions[i]
+                         }
+                       end,
+                       schema_type: @schema.schema_type)
   end
 end
