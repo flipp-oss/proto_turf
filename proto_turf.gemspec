@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary = 'Support for Protobuf files in Confluent Schema Registry'
   spec.homepage = 'https://github.com/flipp-oss/proto_turf'
   spec.license = 'MIT'
+  spec.required_ruby_version = '>= 3.0'
 
   spec.metadata['rubygems_mfa_required'] = 'true'
 

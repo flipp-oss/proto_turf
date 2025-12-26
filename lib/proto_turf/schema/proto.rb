@@ -116,7 +116,9 @@ class ProtoTurf
           full_name = "#{package}.#{message_name}"
           descriptor = Google::Protobuf::DescriptorPool.generated_pool.lookup(full_name)
           unless descriptor
-            raise "Could not find schema for #{full_name}. Make sure the corresponding .proto file has been compiled and loaded."
+            msg = "Could not find schema for #{full_name}. " \
+                  'Make sure the corresponding .proto file has been compiled and loaded.'
+            raise msg
           end
 
           path = find_descriptor(indexes, descriptor.file_descriptor.to_proto.message_type)

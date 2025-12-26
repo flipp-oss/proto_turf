@@ -22,9 +22,9 @@ class ProtoTurf
           write(str)
         end
 
-        def write_line(line, nl = 1)
+        def write_line(line, newline = 1)
           write_indent(line)
-          nl.times { writenl }
+          newline.times { writenl }
         end
 
         def writenl

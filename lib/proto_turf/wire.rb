@@ -4,13 +4,13 @@ class ProtoTurf
   module Wire
     class << self
       # Write an int with zig-zag encoding. Copied from Avro.
-      def write_int(stream, n)
-        n = (n << 1) ^ (n >> 63)
-        while (n & ~0x7F) != 0
-          stream.write(((n & 0x7f) | 0x80).chr)
-          n >>= 7
+      def write_int(stream, num)
+        num = (num << 1) ^ (num >> 63)
+        while (num & ~0x7F) != 0
+          stream.write(((num & 0x7f) | 0x80).chr)
+          num >>= 7
         end
-        stream.write(n.chr)
+        stream.write(num.chr)
       end
 
       # Read an int with zig-zag encoding. Copied from Avro.

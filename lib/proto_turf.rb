@@ -42,7 +42,7 @@ class ProtoTurf
   # connect_timeout      - Timeout to use in the connection with the schema registry (optional).
   # resolv_resolver      - Custom domain name resolver (optional).
   # schema_type          - Protobuf or JSON.
-  def initialize(
+  def initialize( # rubocop:disable Metrics/ParameterLists
     registry: nil,
     registry_url: nil,
     schema_context: nil,
@@ -59,7 +59,6 @@ class ProtoTurf
     client_key_data: nil,
     connect_timeout: nil,
     resolv_resolver: nil,
-    retry_limit: nil,
     schema_type: 'PROTOBUF'
   )
     @logger = logger || Logger.new($stderr)

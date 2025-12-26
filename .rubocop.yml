@@ -1,0 +1,36 @@
+AllCops:
+  Exclude:
+    - app/gen/**/*
+    - spec/gen/**/*
+
+Metrics/MethodLength:
+  Severity: refactor
+  Max: 60
+
+Metrics/ModuleLength:
+  Severity: refactor
+  Max: 800
+
+Metrics/CyclomaticComplexity:
+  Severity: refactor
+  Max: 25
+
+Metrics/ClassLength:
+  Severity: refactor
+  Max: 800
+
+
+Metrics/BlockLength:
+  Enabled: false
+
+Metrics/AbcSize:
+  Severity: refactor
+  Max: 60
+
+Metrics/PerceivedComplexity:
+  Severity: refactor
+  Max: 15
+
+Style/Documentation:
+  Enabled: false
+

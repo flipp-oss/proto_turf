@@ -6,7 +6,7 @@ class ProtoTurf
   class ConfluentSchemaRegistry
     CONTENT_TYPE = 'application/vnd.schemaregistry.v1+json'
 
-    def initialize(
+    def initialize( # rubocop:disable Metrics/ParameterLists
       url,
       schema_context: nil,
       logger: Logger.new($stdout),
