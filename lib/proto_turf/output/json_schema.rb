@@ -9,17 +9,27 @@ class ProtoTurf
           Google::Protobuf::DescriptorPool.generated_pool.lookup(name)
         end
 
-        def output(descriptor, field: nil)
+        def output(descriptor, path: nil)
           properties = {}
           result = {
             '$schema': 'https://json-schema.org/draft/2020-12/schema',
             type: 'object',
-            properties: properties,
-            required: descriptor.field.reject(&:proto3_optional).map(&:name)
+            properties: properties
           }
-          if field
-            properties[field] = field_object(descriptor.field.find { |f| f.name == field.to_s })
+          if path
+            # follow path down
+            parts = path.split('.')
+            field_name = parts.last
+            parts[...-1].each do |part|
+              field = descriptor.field.find { |f| f.name == part }
+              raise "Field #{part} not found in #{descriptor.name}" unless field
+
+              descriptor = fetch(field.type_name)&.to_proto
+            end
+            result[:required] = [field_name]
+            properties[field_name] = field_object(descriptor.field.find { |f| f.name == field_name.to_s })
           else
+            result[:required] = descriptor.field.reject(&:proto3_optional).map(&:name)
             descriptor.field.each do |f|
               properties[f.name] = field_object(f)
             end
@@ -28,7 +38,7 @@ class ProtoTurf
         end
 
         def field_object(field, ignore_repeated: false)
-          klass = fetch(field.type_name)
+          klass = fetch(field.type_name)&.to_proto
           if field.label == :LABEL_REPEATED && !ignore_repeated
             if klass&.options.respond_to?(:map_entry) && klass.options.map_entry
               return {

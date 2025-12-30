@@ -16,6 +16,7 @@ GEM
       bigdecimal
       rexml
     diff-lcs (1.6.1)
+    docile (1.4.1)
     excon (1.2.9)
       logger
     google-protobuf (4.30.2-arm64-darwin)
@@ -72,6 +73,12 @@ GEM
       rubocop (>= 1.75.0, < 2.0)
       rubocop-ast (>= 1.38.0, < 2.0)
     ruby-progressbar (1.13.0)
+    simplecov (0.22.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-html (0.13.2)
+    simplecov_json_formatter (0.1.4)
     standard (1.50.0)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
@@ -103,6 +110,7 @@ DEPENDENCIES
   proto_turf!
   rake (~> 13.0)
   rspec (~> 3.2)
+  simplecov
   standardrb
   webmock
 

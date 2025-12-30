@@ -41,7 +41,7 @@ class ProtoTurf
   # client_key_data      - In-memory client private key to go with client_cert_data (optional).
   # connect_timeout      - Timeout to use in the connection with the schema registry (optional).
   # resolv_resolver      - Custom domain name resolver (optional).
-  # schema_type          - Protobuf or JSON.
+  # schema_type          - PROTOBUF or JSON.
   def initialize( # rubocop:disable Metrics/ParameterLists
     registry: nil,
     registry_url: nil,
