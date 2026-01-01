@@ -5,7 +5,7 @@ require 'proto_turf/output/json_schema'
 
 class ProtoTurf
   module Schema
-    class Json < Base
+    class ProtoJsonSchema < Base
       class << self
         def schema_type
           'JSON'
@@ -15,7 +15,7 @@ class ProtoTurf
           ProtoTurf::Output::JsonSchema.output(message.class.descriptor.to_proto)
         end
 
-        def encode(message, stream)
+        def encode(message, stream, schema_name: nil)
           json = message.to_h.sort.to_h.to_json
           stream.write(json)
         end

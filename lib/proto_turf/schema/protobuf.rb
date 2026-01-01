@@ -9,7 +9,7 @@ require 'proto_turf/wire'
 
 class ProtoTurf
   module Schema
-    class Proto < Base
+    class Protobuf < Base
       class << self
         def schema_type
           'PROTOBUF'
@@ -24,7 +24,7 @@ class ProtoTurf
           ProtoTurf::Output::ProtoText.output(file_descriptor.to_proto)
         end
 
-        def encode(message, stream)
+        def encode(message, stream, schema_name: nil)
           _, indexes = find_index(message.class.descriptor.to_proto,
                                   message.class.descriptor.file_descriptor.to_proto.message_type)
 

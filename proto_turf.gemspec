@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'excon'
   spec.add_dependency 'google-protobuf'
+  spec.add_dependency 'avro'
 
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'rake', '~> 13.0'

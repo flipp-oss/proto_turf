@@ -4,8 +4,9 @@ require 'logger'
 require 'json'
 require 'proto_turf/confluent_schema_registry'
 require 'proto_turf/cached_confluent_schema_registry'
-require 'proto_turf/schema/proto'
-require 'proto_turf/schema/json'
+require 'proto_turf/schema/protobuf'
+require 'proto_turf/schema/proto_json_schema'
+require 'proto_turf/schema/avro'
 
 class ProtoTurf
   class SchemaNotFoundError < StandardError; end
@@ -41,7 +42,7 @@ class ProtoTurf
   # client_key_data      - In-memory client private key to go with client_cert_data (optional).
   # connect_timeout      - Timeout to use in the connection with the schema registry (optional).
   # resolv_resolver      - Custom domain name resolver (optional).
-  # schema_type          - PROTOBUF or JSON.
+  # schema_type          - A ProtoTurf::Schema::Base subclass.
   def initialize( # rubocop:disable Metrics/ParameterLists
     registry: nil,
     registry_url: nil,
@@ -59,7 +60,7 @@ class ProtoTurf
     client_key_data: nil,
     connect_timeout: nil,
     resolv_resolver: nil,
-    schema_type: 'PROTOBUF'
+    schema_type: ProtoTurf::Schema::Protobuf
   )
     @logger = logger || Logger.new($stderr)
     @registry = registry || ProtoTurf::CachedConfluentSchemaRegistry.new(
@@ -81,15 +82,20 @@ class ProtoTurf
         resolv_resolver: resolv_resolver
       )
     )
-    @schema = schema_type.to_s == 'JSON' ? ProtoTurf::Schema::Json : ProtoTurf::Schema::Proto
+    @schema = schema_type
+  end
+
+  class << self
+    attr_accessor :avro_schema_path
   end
 
   # Encodes a message using the specified schema.
   # @param message [Object] The message that should be encoded. Must be compatible with the schema.
   # @param subject [String] The subject name the schema should be registered under in the schema registry (optional).
+  # @param schema_name [String] the name of the schema to use for encoding (optional).
   # @return [String] the encoded data.
-  def encode(message, subject: nil, schema_text: nil)
-    id = register_schema(message, subject, schema_text: schema_text)
+  def encode(message, subject: nil, schema_text: nil, schema_name: nil)
+    id = register_schema(message, subject, schema_text: schema_text, schema_name: schema_name)
 
     stream = StringIO.new
     # Always start with the magic byte.
@@ -98,7 +104,7 @@ class ProtoTurf
     # The schema id is encoded as a 4-byte big-endian integer.
     stream.write([id].pack('N'))
 
-    @schema.encode(message, stream)
+    @schema.encode(message, stream, schema_name: schema_name)
     stream.string
   end
 
@@ -117,15 +123,15 @@ class ProtoTurf
     # The schema id is a 4-byte big-endian integer.
     schema_id = stream.read(4).unpack1('N')
     schema = @registry.fetch(schema_id)
-    @schema.decode(stream, schema)
+    @schema.decode(stream, schema, registry: @registry)
   rescue Excon::Error::NotFound
     raise SchemaNotFoundError, "Schema with id: #{schema_id} is not found on registry"
   end
 
   private
 
-  def register_schema(message, subject, schema_text: nil)
-    schema_text ||= @schema.schema_text(message)
+  def register_schema(message, subject, schema_text: nil, schema_name: nil)
+    schema_text ||= @schema.schema_text(message, schema_name: schema_name)
     return if @registry.registered?(schema_text, subject)
 
     # register dependencies first

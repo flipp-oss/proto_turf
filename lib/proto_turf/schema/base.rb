@@ -19,7 +19,8 @@ class ProtoTurf
 
         # @param message [Object]
         # @param stream [StringIO]
-        def encode(_message, _stream)
+        # @param schema_name [String]
+        def encode(_message, _stream, schema_name: nil)
           raise MissingImplementationError, 'Subclasses must implement encode'
         end
 
