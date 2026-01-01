@@ -39,11 +39,21 @@ class ProtoTurf
           writer.write(message, encoder)
         end
 
-        def decode(stream, schema)
-          decoder = ::Avro::IO::BinaryDecoder.new(stream)
-          readers_schema = @schema_store.find(schema.fullname)
+        def decode(stream, schema_text)
+          # Parse the schema text from the registry into an Avro schema object
+          schema_json = JSON.parse(schema_text)
+          writers_schema = ::Avro::Schema.parse(schema_text)
 
-          reader = ::Avro::IO::DatumReader.new(schema, readers_schema)
+          decoder = ::Avro::IO::BinaryDecoder.new(stream)
+
+          # Try to find the reader schema locally, fall back to writer schema
+          readers_schema = begin
+            schema_store.find(writers_schema.fullname)
+          rescue
+            writers_schema
+          end
+
+          reader = ::Avro::IO::DatumReader.new(writers_schema, readers_schema)
           reader.read(decoder)
         end
       end

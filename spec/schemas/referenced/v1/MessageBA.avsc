@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "MessageBA",
+  "namespace": "referenced.v1",
+  "fields": [
+    {
+      "name": "simple",
+      "type": {
+        "type": "record",
+        "name": "SimpleMessage",
+        "namespace": "simple.v1",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

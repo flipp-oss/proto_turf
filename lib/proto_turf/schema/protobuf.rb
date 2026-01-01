@@ -15,7 +15,7 @@ class ProtoTurf
           'PROTOBUF'
         end
 
-        def schema_text(message)
+        def schema_text(message, schema_name: nil)
           file_descriptor = if message.is_a?(Google::Protobuf::FileDescriptor)
                               message
                             else
@@ -39,7 +39,7 @@ class ProtoTurf
           stream.write(message.to_proto)
         end
 
-        def decode(stream, schema)
+        def decode(stream, schema_text)
           # See https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html#wire-format
           index_length = ProtoTurf::Wire.read_int(stream)
           indexes = []
@@ -52,7 +52,7 @@ class ProtoTurf
           end
 
           encoded = stream.read
-          decode_protobuf(schema, encoded, indexes)
+          decode_protobuf(schema_text, encoded, indexes)
         end
 
         def load_schemas!

@@ -82,7 +82,7 @@ class ProtoTurf
 
       # Don't cache the parsed schema until after its fullname is validated
       if schema.respond_to?(:fullname) && schema.fullname != fullname
-        raise AvroTurf::SchemaError, "expected schema `#{schema_path}' to define type `#{fullname}'"
+        raise ProtoTurf::SchemaError, "expected schema `#{schema_path}' to define type `#{fullname}'"
       end
 
       # Cache only this new top-level schema by its fullname. It's critical

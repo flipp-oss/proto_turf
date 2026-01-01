@@ -10,6 +10,7 @@ require 'proto_turf/schema/avro'
 
 class ProtoTurf
   class SchemaNotFoundError < StandardError; end
+  class SchemaError < StandardError; end
 
   # Provides a way to encode and decode messages without having to embed schemas
   # in the encoded data. Confluent's Schema Registry[1] is used to register
@@ -123,7 +124,7 @@ class ProtoTurf
     # The schema id is a 4-byte big-endian integer.
     schema_id = stream.read(4).unpack1('N')
     schema = @registry.fetch(schema_id)
-    @schema.decode(stream, schema, registry: @registry)
+    @schema.decode(stream, schema)
   rescue Excon::Error::NotFound
     raise SchemaNotFoundError, "Schema with id: #{schema_id} is not found on registry"
   end

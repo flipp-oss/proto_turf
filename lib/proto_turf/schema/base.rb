@@ -7,8 +7,9 @@ class ProtoTurf
     class Base
       class << self
         # @param message [Object]
+        # @param schema_name [String]
         # @return [String]
-        def schema_text(_message)
+        def schema_text(_message, schema_name: nil)
           raise MissingImplementationError, 'Subclasses must implement schema_text'
         end
 
@@ -25,9 +26,10 @@ class ProtoTurf
         end
 
         # @param stream [StringIO]
-        # @param schema [Object]
+        # @param schema_text [String]
+        # @param registry [Object]
         # @return [Object]
-        def decode(_stream, _schema)
+        def decode(_stream, _schema_text)
           raise MissingImplementationError, 'Subclasses must implement decode'
         end
 

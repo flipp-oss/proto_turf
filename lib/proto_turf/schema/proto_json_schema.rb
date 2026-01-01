@@ -11,7 +11,7 @@ class ProtoTurf
           'JSON'
         end
 
-        def schema_text(message)
+        def schema_text(message, schema_name: nil)
           ProtoTurf::Output::JsonSchema.output(message.class.descriptor.to_proto)
         end
 
@@ -20,7 +20,7 @@ class ProtoTurf
           stream.write(json)
         end
 
-        def decode(stream, _schema)
+        def decode(stream, _schema_text)
           json = stream.read
           JSON.parse(json)
         end

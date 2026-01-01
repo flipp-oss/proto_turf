@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "SimpleMessage",
+  "namespace": "simple.v1",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    }
+  ]
+}
